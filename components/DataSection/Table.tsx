@@ -105,6 +105,7 @@ export default function Table({
 							<th className="px-4 py-3 font-semibold">Code</th>
 							<th className="px-4 py-3 font-semibold">Match day and time</th>
 							<th className="px-4 py-3 font-semibold">Participants</th>
+							<th className="px-4 py-3 font-semibold">Endpoint</th>
 							<th className="px-4 py-3 font-semibold">Actions</th>
 						</tr>
 					</thead>
@@ -126,13 +127,16 @@ export default function Table({
 										{getMatchDayAndTime(schedule.startDate)}
 									</td>
 									<td className="px-4 py-3">{getParticipantNames(schedule)}</td>
+									<td className="px-4 py-3 font-mono text-xs">
+										{`${MATCH_DETAILS_API_PREFIX}${schedule.code}`}
+									</td>
 									<td className="px-4 py-3">
 										<button
 											type="button"
 											onClick={() => openDetailsModal(schedule.code)}
 											className="text-blue-700 underline hover:text-blue-900"
 										>
-											Open JSON
+											See JSON
 										</button>
 									</td>
 								</tr>
