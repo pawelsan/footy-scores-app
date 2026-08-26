@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { MatchOverview } from '@/types/retrievedData/matchOverview';
+import type { Match } from '@/types/match';
 import {
 	getDisplayCode,
 	getMatchDayAndTime,
@@ -9,6 +10,7 @@ import {
 	type KnownStage,
 	type StageLegendItem,
 } from './helpers';
+import MatchDetailsModal, { type MatchDetailsState } from './MatchDetailsModal';
 import TableControls from './TableControls';
 
 type SectionProps = {
@@ -26,6 +28,9 @@ export default function Table({
 }: SectionProps) {
 	const [visibleStages, setVisibleStages] =
 		useState<KnownStage[]>(defaultVisibleStages);
+	const [detailsState, setDetailsState] = useState<MatchDetailsState>({
+		status: 'CLOSED',
+	});
 
 	const toggleVisibleStage = (stage: KnownStage, isChecked: boolean) => {
 		setVisibleStages((current) => {
@@ -39,6 +44,43 @@ export default function Table({
 
 			return current.filter((item) => item !== stage);
 		});
+	};
+
+	const closeDetailsModal = () => {
+		setDetailsState({ status: 'CLOSED' });
+	};
+
+	const openDetailsModal = async (code: string) => {
+		setDetailsState({ status: 'LOADING', selectedCode: code });
+
+		try {
+			const params = new URLSearchParams({ CODE: code });
+			const response = await fetch(`/api/match?${params.toString()}`);
+
+			if (!response.ok) {
+				const errorPayload = (await response.json()) as { error?: string };
+				throw new Error(
+					errorPayload.error ??
+						`Failed to fetch details. Status: ${response.status}`,
+				);
+			}
+
+			const payload = (await response.json()) as Match;
+			setDetailsState({
+				status: 'SUCCESS',
+				selectedCode: code,
+				selectedMatch: payload,
+			});
+		} catch (error) {
+			setDetailsState({
+				status: 'ERROR',
+				selectedCode: code,
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to load match details.',
+			});
+		}
 	};
 
 	return (
@@ -61,6 +103,7 @@ export default function Table({
 							<th className="px-4 py-3 font-semibold">Code</th>
 							<th className="px-4 py-3 font-semibold">Match day and time</th>
 							<th className="px-4 py-3 font-semibold">Participants</th>
+							<th className="px-4 py-3 font-semibold">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -81,11 +124,24 @@ export default function Table({
 										{getMatchDayAndTime(schedule.startDate)}
 									</td>
 									<td className="px-4 py-3">{getParticipantNames(schedule)}</td>
+									<td className="px-4 py-3">
+										<button
+											type="button"
+											onClick={() => openDetailsModal(schedule.code)}
+											className="text-blue-700 underline hover:text-blue-900"
+										>
+											Open JSON
+										</button>
+									</td>
 								</tr>
 							))}
 					</tbody>
 				</table>
 			</div>
+			<MatchDetailsModal
+				detailsState={detailsState}
+				onClose={closeDetailsModal}
+			/>
 		</section>
 	);
 }
