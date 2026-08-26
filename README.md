@@ -1,36 +1,172 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FootyScores QA Endpoint Generator
 
-## Getting Started
+Web application for QA engineers to generate and review expected football match endpoints for Paris 2024 Olympic Games data.
 
-First, run the development server:
+## Assignment Scope
+
+This app:
+
+- loads football schedule data from the Olympics feed
+- filters to football matches only
+- generates a deterministic list of endpoint keys per match
+- allows visual review by women and men tabs
+- allows JSON export for all matches
+- lets users inspect mapped match details JSON via modal
+
+## Tech Stack
+
+- Next.js (App Router)
+- React + TypeScript
+- Tailwind CSS
+
+## Setup
+
+### Prerequisites
+
+- Node.js 20+
+- npm 10+
+
+### Install and run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## How Data Is Retrieved and Parsed
 
-To learn more about Next.js, take a look at the following resources:
+1. Client loads schedule list from:
+   - `https://stacy.olympics.com/OG2024/data/SCH_StartList~comp=OG2024~disc=FBL~lang=ENG.json`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. App excludes non-match entries (for example medal ceremony rows) using code filtering.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. App splits data into women and men tabs using code prefix.
 
-## Deploy on Vercel
+4. Rows are sorted deterministically by kickoff date and time.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Details are fetched through internal API endpoint:
+   - `/api/match?CODE=<match-code>`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+6. Server route calls Olympics details feed and maps source payload to app response format.
+
+## Endpoint Generation
+
+Generated endpoint key format:
+
+```text
+/api/match?CODE=<full_schedule_code>
+```
+
+Where `<full_schedule_code>` is the full match code from schedule data.
+
+Example:
+
+```text
+/api/match?CODE=FBLMTEAM11------------GPB-000100--
+```
+
+Each match code maps to one unique endpoint key.
+
+## Deterministic Ordering
+
+Default ordering rule:
+
+1. Sort by parsed `startDate` ascending.
+2. If two rows share the same date/time, sort by `code` ascending.
+3. Invalid dates are placed after valid dates and still sorted deterministically by code.
+
+This ordering is used for rendering and for export preparation.
+
+## Export Behavior
+
+The app supports:
+
+- `Export all JSON` above tabs (women + men combined)
+
+If all endpoints resolve successfully, output is a plain object:
+
+```json
+{
+	"/api/match?CODE=<code-1>": { "...": "mapped match data" },
+	"/api/match?CODE=<code-2>": { "...": "mapped match data" }
+}
+```
+
+If some endpoints fail, export still succeeds and includes partial failures:
+
+```json
+{
+	"matches": {
+		"/api/match?CODE=<ok-code>": { "...": "mapped match data" }
+	},
+	"errors": {
+		"/api/match?CODE=<failed-code>": "error message"
+	},
+	"meta": {
+		"total": 52,
+		"exported": 51,
+		"failed": 1
+	}
+}
+```
+
+## Assumptions and Data Quality Rules
+
+- Upstream schedule and details feeds may contain missing nested fields.
+- Missing scorer minute defaults to `0` rather than failing export/mapping.
+- Added stoppage time (`45+2`) is intentionally normalized to the base minute (`45`) for numeric consistency.
+- If some details endpoints fail, export should still provide successful entries and explicit failure list.
+- Status mapping currently treats Olympics `FINISHED` as `FT`; all other states map to `NS`.
+
+## UI States
+
+Implemented states:
+
+- Loading data
+- Empty data
+- Error loading schedule
+- Export pending
+- Export partial/full failure with user-visible message
+- Match details modal loading/error/success
+
+## Project Structure
+
+- `app/page.tsx`: main screen and top-level load action
+- `components/DataSection/DataSection.tsx`: tabbed layout and global export
+- `components/DataSection/Table.tsx`: section table, filters, row actions
+- `components/DataSection/exportUtils.ts`: deterministic export + download helpers
+- `app/api/match/route.ts`: server proxy and normalization for match details
+- `utils/mapper.ts`: source-to-target details mapper
+
+## Acceptance Criteria Mapping
+
+- Accessible UI with trigger to load data: implemented
+- Display football matches + generated endpoints: implemented
+- Export output as JSON: implemented
+- Data source from official Olympics schedule: implemented
+- Deterministic output order: implemented and documented
+- UX states for loading/empty/error: implemented
+- Inspect per-match data: implemented through JSON modal
+
+## Bonus Status
+
+Automated expected-vs-tested JSON comparison is not implemented yet.
+
+## Deployment
+
+This app can be deployed to any Node-capable Next.js host.
+
+Typical options:
+
+- Vercel
+- Netlify (Next.js runtime)
+- self-hosted Node server
