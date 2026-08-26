@@ -8,6 +8,8 @@ const DETAILS_URL_TAIL = '~lang=ENG.json';
 const DETAILS_CACHE_REVALIDATE_SECONDS = 3600;
 
 const normalizeCode = (value: string): string => value.trim();
+const isObject = (value: unknown): value is Record<string, unknown> =>
+	typeof value === 'object' && value !== null;
 
 export async function GET(request: Request) {
 	const { searchParams } = new URL(request.url);
@@ -49,8 +51,17 @@ export async function GET(request: Request) {
 			);
 		}
 
-		const payload = (await response.json()) as Data;
-		const mapped = mapRetrievedMatchDetailsToMatchResponse(payload);
+		const payload: unknown = await response.json();
+
+		if (!isObject(payload) || !('results' in payload)) {
+			return NextResponse.json(
+				{ error: 'Unexpected upstream payload format' },
+				{ status: 502 },
+			);
+		}
+
+		const typedPayload = payload as unknown as Data;
+		const mapped = mapRetrievedMatchDetailsToMatchResponse(typedPayload);
 
 		return NextResponse.json(mapped, { status: 200 });
 	} catch (error) {

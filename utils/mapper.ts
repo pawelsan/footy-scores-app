@@ -197,17 +197,20 @@ const buildLineup = (item?: Item) => {
 export const mapRetrievedMatchDetailsToMatchResponse = (
 	data: Data,
 ): MatchResponse => {
-	const items = data.results.items ?? [];
-	const actions = data.results.playByPlay.flatMap((item) => item.actions ?? []);
+	const results = data.results;
+	const items = results.items ?? [];
+	const actions = (results.playByPlay ?? []).flatMap(
+		(item) => item.actions ?? [],
+	);
 
 	const homeItem = getItemBySide(items, 'HOME');
 	const awayItem = getItemBySide(items, 'AWAY');
 
-	const finalScore = getFinalScore(data.results.periods);
-	const halfTimeScore = getHalfTimeScore(data.results.periods);
+	const finalScore = getFinalScore(results.periods ?? []);
+	const halfTimeScore = getHalfTimeScore(results.periods ?? []);
 
-	const venue = data.results.schedule.venue.description ?? '';
-	const location = data.results.schedule.location.description ?? '';
+	const venue = results.schedule?.venue?.description ?? '';
+	const location = results.schedule?.location?.description ?? '';
 	const city = location.includes(',')
 		? location.split(',').slice(1).join(',').trim()
 		: location;
@@ -216,14 +219,14 @@ export const mapRetrievedMatchDetailsToMatchResponse = (
 		competition: {
 			name: 'Olympic Football Tournament',
 			season: '2024',
-			round: data.results.eventUnit.description,
+			round: results.eventUnit?.description ?? '',
 		},
 		venue: {
 			name: venue,
 			city,
 		},
-		kickoff: data.results.schedule.startDate,
-		status: data.results.schedule.status.code === 'FINISHED' ? 'FT' : 'NS',
+		kickoff: results.schedule?.startDate ?? '',
+		status: results.schedule?.status?.code === 'FINISHED' ? 'FT' : 'NS',
 		teams: {
 			home: homeItem?.participant.name ?? 'Home',
 			away: awayItem?.participant.name ?? 'Away',

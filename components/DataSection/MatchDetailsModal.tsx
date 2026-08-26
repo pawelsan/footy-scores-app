@@ -41,7 +41,6 @@ export default function MatchDetailsModal({
 				<div className="mb-3 flex items-start justify-between gap-4">
 					<div>
 						<h3 className="text-lg font-semibold">Match details</h3>
-						<p className="text-xs text-gray-600">{selectedEndpoint}</p>
 					</div>
 					<button
 						type="button"
@@ -70,7 +69,11 @@ export default function MatchDetailsModal({
 							Copy
 						</button>
 						<pre className="overflow-auto rounded bg-gray-50 p-3 pr-16 text-xs">
-							{JSON.stringify(detailsState.selectedMatch, null, 2)}
+							{JSON.stringify(
+								{ [selectedEndpoint]: detailsState.selectedMatch },
+								null,
+								2,
+							)}
 						</pre>
 					</div>
 				) : null}
