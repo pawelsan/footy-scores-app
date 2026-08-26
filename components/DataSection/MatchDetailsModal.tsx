@@ -1,5 +1,5 @@
 import type { MatchResponse } from '@/types/match';
-import { MATCH_DETAILS_API_PREFIX } from './helpers';
+import { MATCH_DETAILS_API_PREFIX } from '../../utils/helpers';
 
 export type MatchDetailsState = {
 	status: 'CLOSED' | 'LOADING' | 'ERROR' | 'SUCCESS';

@@ -8,12 +8,12 @@ import {
 	womenDefaultVisibleStages,
 	menLegendItems,
 	menDefaultVisibleStages,
-} from './helpers';
+} from '../../utils/helpers';
 import {
 	downloadJsonFile,
 	exportSchedulesToJson,
 	type ExportState,
-} from './exportUtils';
+} from '../../utils/exportUtils';
 import Table from './Table';
 
 type TableProps = {

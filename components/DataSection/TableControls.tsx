@@ -1,4 +1,4 @@
-import type { KnownStage, StageLegendItem } from './helpers';
+import type { KnownStage, StageLegendItem } from '../../utils/helpers';
 
 type TableControlsProps = {
 	legendItems: StageLegendItem[];

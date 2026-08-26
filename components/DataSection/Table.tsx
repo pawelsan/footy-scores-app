@@ -10,7 +10,7 @@ import {
 	getStageKey,
 	type KnownStage,
 	type StageLegendItem,
-} from './helpers';
+} from '../../utils/helpers';
 import MatchDetailsModal, { type MatchDetailsState } from './MatchDetailsModal';
 import TableControls from './TableControls';
 
