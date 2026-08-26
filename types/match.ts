@@ -1,26 +1,26 @@
-export type MatchPlayer = {
+export interface MatchPlayer {
 	name: string;
 	number: number;
 	position: string;
-};
+}
 
-export type MatchLineup = {
+interface MatchLineup {
 	team: string;
 	formation: string;
 	coach: string;
 	startingXI: MatchPlayer[];
 	bench: MatchPlayer[];
-};
+}
 
-export type MatchScorer = {
+export interface MatchScorer {
 	team: string;
 	player: string;
 	minute: number;
 	type: string;
 	assist?: string;
-};
+}
 
-export type MatchResponse = {
+export interface MatchResponse {
 	competition: {
 		name: string;
 		season: string;
@@ -49,4 +49,4 @@ export type MatchResponse = {
 		home: MatchLineup;
 		away: MatchLineup;
 	};
-};
+}

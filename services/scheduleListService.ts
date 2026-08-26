@@ -1,4 +1,4 @@
-import type { ScheduleListResponse } from '@/types/retrievedData/startList';
+import type { ScheduleListResponse } from '@/types/retrievedData/matchOverview';
 
 const SCHEDULE_LIST_URL =
 	'https://stacy.olympics.com/OG2024/data/SCH_StartList~comp=OG2024~disc=FBL~lang=ENG.json';
