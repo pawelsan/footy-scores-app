@@ -43,6 +43,19 @@ npm run build
 npm run start
 ```
 
+### Run checks
+
+```bash
+npm run lint
+npm run test
+```
+
+For interactive test mode:
+
+```bash
+npm run test:watch
+```
+
 ## How Data Is Retrieved and Parsed
 
 1. Client loads schedule list from:
@@ -154,6 +167,10 @@ Implemented states:
 - `utils/exportUtils.ts`: deterministic export + download helpers (including cancel/retry support)
 - `app/api/match/route.ts`: server proxy and normalization for match details
 - `utils/mapper.ts`: source-to-target details mapper
+- `tests/helpers.test.ts`: utility and formatting helper tests
+- `tests/mapper.test.ts`: mapping behavior and fallback tests
+- `tests/route.test.ts`: API route validation and error-path tests
+- `vitest.config.mts`: Vitest configuration with project alias support
 
 ## Acceptance Criteria Mapping
 
