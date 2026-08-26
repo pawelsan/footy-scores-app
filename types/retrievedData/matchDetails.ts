@@ -7,6 +7,7 @@ export interface EventUnitEntry {
 
 export interface TeamAthletes {
 	bib: string;
+	participantCode: string;
 	athlete: {
 		givenName: string;
 		familyName: string;
@@ -26,6 +27,7 @@ export interface TeamCoaches {
 }
 
 export interface Participant {
+	code: string;
 	name: string;
 }
 
@@ -62,6 +64,17 @@ export interface PlayByPlayItem {
 	actions: Action[];
 }
 
+export interface PeriodSide {
+	score: string;
+	periodScore?: string;
+}
+
+export interface Period {
+	p_code: string;
+	home: PeriodSide;
+	away: PeriodSide;
+}
+
 export interface Results {
 	items: Item[];
 	playByPlay: PlayByPlayItem[];
@@ -70,13 +83,18 @@ export interface Results {
 		longDescription: string;
 		shortDescription: string;
 	};
+	periods: Period[];
 	schedule: {
 		startDate: string;
 		endDate: string;
+		status: {
+			code: string;
+		};
+		venue: {
+			description: string;
+		};
 		location: {
 			description: string;
-			longDescription: string;
-			shortDescription: string;
 		};
 	};
 }

@@ -2,6 +2,7 @@ import type {
 	Action,
 	Data,
 	Item,
+	Period,
 	TeamAthletes,
 } from '../types/retrievedData/matchDetails';
 import type { MatchResponse, MatchPlayer, MatchScorer } from '../types/match';
@@ -31,15 +32,6 @@ const getItemBySide = (
 	return items.find((item) => getItemSide(item) === side);
 };
 
-const parseScoreValue = (value?: string): number => {
-	if (!value) {
-		return 0;
-	}
-
-	const parsed = Number.parseInt(value, 10);
-	return Number.isNaN(parsed) ? 0 : parsed;
-};
-
 const getActionMinute = (action: Action): number => {
 	const base = action.pbpa_When.match(/\d+/);
 	const added = action.pbpa_When.match(/\+\s*(\d+)/);
@@ -50,50 +42,27 @@ const getActionMinute = (action: Action): number => {
 	return baseMinute + addedMinute;
 };
 
-const getFinalScore = (actions: Action[]) => {
-	if (actions.length === 0) {
-		return { home: 0, away: 0 };
-	}
-
-	const sorted = [...actions].sort((a, b) => a.pbpa_order - b.pbpa_order);
-	const lastWithScore = [...sorted]
-		.reverse()
-		.find(
-			(action) =>
-				action.pbpa_ScoreH !== undefined && action.pbpa_ScoreA !== undefined,
-		);
-
-	if (!lastWithScore) {
-		return { home: 0, away: 0 };
-	}
-
+const getFinalScore = (periods: Period[]) => {
+	const fullTime = periods.find((period) => period.p_code === 'TOT');
 	return {
-		home: parseScoreValue(lastWithScore.pbpa_ScoreH),
-		away: parseScoreValue(lastWithScore.pbpa_ScoreA),
+		home: Number(fullTime?.home.score),
+		away: Number(fullTime?.away.score),
 	};
 };
 
-const getHalfTimeScore = (actions: Action[]) => {
-	const firstHalf = actions
-		.filter((action) => action.pbpa_period === 'H1')
-		.sort((a, b) => a.pbpa_order - b.pbpa_order);
-
-	if (firstHalf.length === 0) {
-		return { home: 0, away: 0 };
-	}
-
-	const last = firstHalf[firstHalf.length - 1];
+const getHalfTimeScore = (periods: Period[]) => {
+	const halfTime = periods.find((period) => period.p_code === 'H1');
 	return {
-		home: parseScoreValue(last.pbpa_ScoreH),
-		away: parseScoreValue(last.pbpa_ScoreA),
+		home: Number(halfTime?.home.score),
+		away: Number(halfTime?.away.score),
 	};
 };
 
-const findPlayerByBib = (
+const findPlayerByCode = (
 	athletes: TeamAthletes[],
-	bib: string,
+	code: string,
 ): TeamAthletes | undefined => {
-	return athletes.find((athlete) => athlete.bib === bib);
+	return athletes.find((athlete) => athlete.participantCode === code);
 };
 
 const buildScorers = (
@@ -112,7 +81,10 @@ const buildScorers = (
 				return null;
 			}
 
-			const teamItem = competitor.pbpc_order === 1 ? homeItem : awayItem;
+			const teamItem =
+				competitor.pbpc_code === homeItem?.participant.code
+					? homeItem
+					: awayItem;
 			if (!teamItem) {
 				return null;
 			}
@@ -127,12 +99,12 @@ const buildScorers = (
 			const assistAthlete = competitor.athletes.find(
 				(athlete) => athlete.pbpat_role === 'ASSIST',
 			);
-			const scorer = findPlayerByBib(
+			const scorer = findPlayerByCode(
 				teamItem.teamAthletes,
-				scorerAthlete.pbpat_bib,
+				scorerAthlete.pbpat_code,
 			);
 			const assist = assistAthlete
-				? findPlayerByBib(teamItem.teamAthletes, assistAthlete.pbpat_bib)
+				? findPlayerByCode(teamItem.teamAthletes, assistAthlete.pbpat_code)
 				: undefined;
 
 			const scorerName = scorer
@@ -229,9 +201,10 @@ export const mapRetrievedMatchDetailsToMatchResponse = (
 	const homeItem = getItemBySide(items, 'HOME');
 	const awayItem = getItemBySide(items, 'AWAY');
 
-	const finalScore = getFinalScore(actions);
-	const halfTime = getHalfTimeScore(actions);
+	const finalScore = getFinalScore(data.results.periods);
+	const halfTimeScore = getHalfTimeScore(data.results.periods);
 
+	const venue = data.results.schedule.venue.description ?? '';
 	const location = data.results.schedule.location.description ?? '';
 	const city = location.includes(',')
 		? location.split(',').slice(1).join(',').trim()
@@ -239,26 +212,24 @@ export const mapRetrievedMatchDetailsToMatchResponse = (
 
 	return {
 		competition: {
-			name: data.results.eventUnit.description,
-			season: '',
-			round: '',
+			name: 'Olympic Football Tournament',
+			season: '2024',
+			round: data.results.eventUnit.description,
 		},
 		venue: {
-			name: location,
+			name: venue,
 			city,
 		},
 		kickoff: data.results.schedule.startDate,
-		status: actions.length > 0 ? 'FT' : 'NS',
+		status: data.results.schedule.status.code === 'FINISHED' ? 'FT' : 'NS',
 		teams: {
 			home: homeItem?.participant.name ?? 'Home',
 			away: awayItem?.participant.name ?? 'Away',
 		},
 		score: {
-			home: finalScore.home,
-			away: finalScore.away,
+			...finalScore,
 			halfTime: {
-				home: halfTime.home,
-				away: halfTime.away,
+				...halfTimeScore,
 			},
 		},
 		scorers: buildScorers(actions, homeItem, awayItem),
