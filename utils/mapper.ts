@@ -33,13 +33,15 @@ const getItemBySide = (
 };
 
 const getActionMinute = (action: Action): number => {
-	const base = action.pbpa_When.match(/\d+/);
-	const added = action.pbpa_When.match(/\+\s*(\d+)/);
+	const whenValue =
+		typeof action.pbpa_When === 'string' ? action.pbpa_When : '';
+	const base = whenValue.match(/\d+/);
 
 	const baseMinute = base ? Number.parseInt(base[0], 10) : 0;
-	const addedMinute = added ? Number.parseInt(added[1], 10) : 0;
-
-	return baseMinute + addedMinute;
+	// const added = whenValue.match(/\+\s*(\d+)/);
+	// const addedMinute = added ? Number.parseInt(added[1], 10) : 0;
+	// because of the assignment description (the minute should be number), added time is not considered (a goal scored at 45' + 2 is considered as scored at 45' and not at 47')
+	return baseMinute;
 };
 
 const getFinalScore = (periods: Period[]) => {
