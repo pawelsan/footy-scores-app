@@ -1,5 +1,6 @@
 import type { MatchOverview } from '@/types/retrievedData/matchOverview';
 
+export const MATCH_DETAILS_API_PREFIX = '/api/match?CODE=';
 export const WOMEN_CODE_PREFIX = 'FBLWTEAM11';
 export const EXCLUDED_CODE_PART = 'VICTMEDAL';
 export const KNOWN_STAGES = [

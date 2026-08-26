@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { Data } from '@/types/retrievedData/matchDetails';
-import { mapMatchDetailsToMatch } from '@/utils/mapper';
+import { mapRetrievedMatchDetailsToMatchResponse } from '@/utils/mapper';
 
 const DETAILS_URL_BASE =
 	'https://stacy.olympics.com/OG2024/data/RES_ByRSC_H2H~comp=OG2024~disc=FBL~rscResult=';
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 		}
 
 		const payload = (await response.json()) as Data;
-		const mapped = mapMatchDetailsToMatch(payload);
+		const mapped = mapRetrievedMatchDetailsToMatchResponse(payload);
 
 		return NextResponse.json(mapped, { status: 200 });
 	} catch (error) {

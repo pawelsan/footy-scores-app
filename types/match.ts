@@ -20,7 +20,7 @@ export type MatchScorer = {
 	assist?: string;
 };
 
-export type Match = {
+export type MatchResponse = {
 	competition: {
 		name: string;
 		season: string;

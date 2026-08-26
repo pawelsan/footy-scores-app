@@ -4,7 +4,7 @@ import type {
 	Item,
 	TeamAthletes,
 } from '../types/retrievedData/matchDetails';
-import type { Match, MatchPlayer, MatchScorer } from '../types/match';
+import type { MatchResponse, MatchPlayer, MatchScorer } from '../types/match';
 
 const HOME_AWAY_CODE = 'HOME_AWAY';
 const FORMATION_CODE = 'FORMATION';
@@ -220,7 +220,9 @@ const buildLineup = (item?: Item) => {
 	};
 };
 
-export const mapMatchDetailsToMatch = (data: Data): Match => {
+export const mapRetrievedMatchDetailsToMatchResponse = (
+	data: Data,
+): MatchResponse => {
 	const items = data.results.items ?? [];
 	const actions = data.results.playByPlay.flatMap((item) => item.actions ?? []);
 

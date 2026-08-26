@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { MatchOverview } from '@/types/retrievedData/matchOverview';
-import type { Match } from '@/types/match';
+import type { MatchResponse } from '@/types/match';
 import {
+	MATCH_DETAILS_API_PREFIX,
 	getDisplayCode,
 	getMatchDayAndTime,
 	getParticipantNames,
@@ -54,8 +55,9 @@ export default function Table({
 		setDetailsState({ status: 'LOADING', selectedCode: code });
 
 		try {
-			const params = new URLSearchParams({ CODE: code });
-			const response = await fetch(`/api/match?${params.toString()}`);
+			const response = await fetch(
+				`${MATCH_DETAILS_API_PREFIX}${encodeURIComponent(code)}`,
+			);
 
 			if (!response.ok) {
 				const errorPayload = (await response.json()) as { error?: string };
@@ -65,7 +67,7 @@ export default function Table({
 				);
 			}
 
-			const payload = (await response.json()) as Match;
+			const payload = (await response.json()) as MatchResponse;
 			setDetailsState({
 				status: 'SUCCESS',
 				selectedCode: code,

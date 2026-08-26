@@ -1,10 +1,11 @@
-import type { Match } from '@/types/match';
+import type { MatchResponse } from '@/types/match';
+import { MATCH_DETAILS_API_PREFIX } from './helpers';
 
 export type MatchDetailsState = {
 	status: 'CLOSED' | 'LOADING' | 'ERROR' | 'SUCCESS';
 	selectedCode?: string;
 	error?: string;
-	selectedMatch?: Match;
+	selectedMatch?: MatchResponse;
 };
 
 type MatchDetailsModalProps = {
@@ -30,15 +31,17 @@ export default function MatchDetailsModal({
 		);
 	};
 
+	const selectedEndpoint = detailsState.selectedCode
+		? `${MATCH_DETAILS_API_PREFIX}${detailsState.selectedCode}`
+		: '';
+
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 			<div className="max-h-[85vh] w-full max-w-3xl overflow-auto rounded-md bg-white p-4 shadow-lg">
 				<div className="mb-3 flex items-start justify-between gap-4">
 					<div>
 						<h3 className="text-lg font-semibold">Match details</h3>
-						<p className="text-xs text-gray-600">
-							{detailsState.selectedCode ?? '-'}
-						</p>
+						<p className="text-xs text-gray-600">{selectedEndpoint}</p>
 					</div>
 					<button
 						type="button"
