@@ -68,8 +68,8 @@ export default function DataSection({
 	};
 
 	return (
-		<div className="flex w-full flex-col items-center gap-0">
-			<div className="flex w-full max-w-3xl items-end gap-2 border-b border-gray-200">
+		<div className="flex w-full max-w-6xl flex-col items-center gap-0">
+			<div className="flex w-full items-end gap-2 border-b border-gray-200">
 				<button
 					type="button"
 					onClick={() => setActiveTab('women')}

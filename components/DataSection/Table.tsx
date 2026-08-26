@@ -86,7 +86,7 @@ export default function Table({
 	};
 
 	return (
-		<section className="mx-auto w-full max-w-3xl">
+		<section className="w-full">
 			<h2 className="mb-2 text-xl font-semibold">{title}</h2>
 			<TableControls
 				legendItems={legendItems}
