@@ -15,6 +15,66 @@ export type ExportState =
 	| { status: 'PENDING' }
 	| { status: 'ERROR'; error: string };
 
+export type ExportOptions = {
+	signal?: AbortSignal;
+	retries?: number;
+};
+
+const isAbortError = (error: unknown): boolean =>
+	error instanceof DOMException
+		? error.name === 'AbortError'
+		: error instanceof Error && error.name === 'AbortError';
+
+const fetchMatchWithRetry = async (
+	code: string,
+	endpointKey: string,
+	options?: ExportOptions,
+) => {
+	const retries = options?.retries ?? 0;
+
+	for (let attempt = 0; attempt <= retries; attempt += 1) {
+		try {
+			const response = await fetch(
+				`${MATCH_DETAILS_API_PREFIX}${encodeURIComponent(code)}`,
+				{ signal: options?.signal },
+			);
+
+			if (!response.ok) {
+				const message = await getErrorMessage(response, code);
+
+				if (attempt === retries) {
+					return {
+						endpoint: endpointKey,
+						error: message,
+					};
+				}
+
+				continue;
+			}
+
+			const payload = (await response.json()) as MatchResponse;
+			return { endpoint: endpointKey, payload };
+		} catch (error) {
+			if (isAbortError(error)) {
+				throw error;
+			}
+
+			if (attempt === retries) {
+				return {
+					endpoint: endpointKey,
+					error:
+						error instanceof Error ? error.message : `Failed to fetch ${code}.`,
+				};
+			}
+		}
+	}
+
+	return {
+		endpoint: endpointKey,
+		error: `Failed to fetch ${code}.`,
+	};
+};
+
 const getErrorMessage = async (
 	response: Response,
 	code: string,
@@ -49,6 +109,7 @@ export const downloadJsonFile = (filename: string, payload: unknown) => {
 
 export const exportSchedulesToJson = async (
 	schedules: MatchOverview[],
+	options?: ExportOptions,
 ): Promise<ExportResult> => {
 	const sortedSchedules = sortByStartDate(schedules);
 
@@ -56,29 +117,7 @@ export const exportSchedulesToJson = async (
 		sortedSchedules.map(async (schedule) => {
 			const endpointKey = `${MATCH_DETAILS_API_PREFIX}${schedule.code}`;
 
-			try {
-				const response = await fetch(
-					`${MATCH_DETAILS_API_PREFIX}${encodeURIComponent(schedule.code)}`,
-				);
-
-				if (!response.ok) {
-					return {
-						endpoint: endpointKey,
-						error: await getErrorMessage(response, schedule.code),
-					};
-				}
-
-				const payload = (await response.json()) as MatchResponse;
-				return { endpoint: endpointKey, payload };
-			} catch (error) {
-				return {
-					endpoint: endpointKey,
-					error:
-						error instanceof Error
-							? error.message
-							: `Failed to fetch ${schedule.code}.`,
-				};
-			}
+			return fetchMatchWithRetry(schedule.code, endpointKey, options);
 		}),
 	);
 

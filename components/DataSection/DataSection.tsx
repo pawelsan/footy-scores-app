@@ -23,6 +23,12 @@ type TableProps = {
 };
 
 type TabKey = 'women' | 'men';
+const EXPORT_RETRY_ATTEMPTS = 1;
+
+const isAbortError = (error: unknown): boolean =>
+	error instanceof DOMException
+		? error.name === 'AbortError'
+		: error instanceof Error && error.name === 'AbortError';
 
 export default function DataSection({
 	schedules,
@@ -33,6 +39,8 @@ export default function DataSection({
 	const [exportAllState, setExportAllState] = useState<ExportState>({
 		status: 'IDLE',
 	});
+	const [exportAbortController, setExportAbortController] =
+		useState<AbortController | null>(null);
 
 	if (isLoading) {
 		return <p className="text-sm text-gray-600">Loading data...</p>;
@@ -77,10 +85,15 @@ export default function DataSection({
 	};
 
 	const handleExportAllJson = async () => {
+		const controller = new AbortController();
+		setExportAbortController(controller);
 		setExportAllState({ status: 'PENDING' });
 
 		try {
-			const exportResult = await exportSchedulesToJson(allSchedules);
+			const exportResult = await exportSchedulesToJson(allSchedules, {
+				signal: controller.signal,
+				retries: EXPORT_RETRY_ATTEMPTS,
+			});
 			const exportPayload =
 				exportResult.failed === 0
 					? exportResult.matches
@@ -106,6 +119,14 @@ export default function DataSection({
 
 			setExportAllState({ status: 'IDLE' });
 		} catch (error) {
+			if (isAbortError(error)) {
+				setExportAllState({
+					status: 'ERROR',
+					error: 'Export canceled by user.',
+				});
+				return;
+			}
+
 			setExportAllState({
 				status: 'ERROR',
 				error:
@@ -113,7 +134,13 @@ export default function DataSection({
 						? error.message
 						: 'Failed to export all matches as JSON.',
 			});
+		} finally {
+			setExportAbortController(null);
 		}
+	};
+
+	const handleCancelExportAll = () => {
+		exportAbortController?.abort();
 	};
 
 	return (
@@ -148,6 +175,24 @@ export default function DataSection({
 							? 'Exporting all...'
 							: 'Export all JSON'}
 					</button>
+					{exportAllState.status === 'PENDING' ? (
+						<button
+							type="button"
+							onClick={handleCancelExportAll}
+							className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+						>
+							Cancel
+						</button>
+					) : null}
+					{exportAllState.status === 'ERROR' ? (
+						<button
+							type="button"
+							onClick={handleExportAllJson}
+							className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+						>
+							Retry export
+						</button>
+					) : null}
 					{exportAllState.status === 'ERROR' ? (
 						<p className="text-sm text-red-600">{exportAllState.error}</p>
 					) : null}
