@@ -11,6 +11,7 @@ This app:
 - generates a deterministic list of endpoint keys per match
 - allows visual review by women and men tabs
 - allows JSON export for all matches
+- supports canceling long exports and retrying failed exports
 - lets users inspect mapped match details JSON via modal
 
 ## Tech Stack
@@ -92,6 +93,12 @@ The app supports:
 
 - `Export all JSON` above tabs (women + men combined)
 
+Export ergonomics for QA workflow:
+
+- `Cancel` button is available while export is running
+- `Retry export` button is shown when export fails or is canceled
+- each endpoint fetch is retried once before being marked as failed
+
 If all endpoints resolve successfully, output is a plain object:
 
 ```json
@@ -135,6 +142,7 @@ Implemented states:
 - Empty data
 - Error loading schedule
 - Export pending
+- Export canceled
 - Export partial/full failure with user-visible message
 - Match details modal loading/error/success
 
@@ -143,7 +151,7 @@ Implemented states:
 - `app/page.tsx`: main screen and top-level load action
 - `components/DataSection/DataSection.tsx`: tabbed layout and global export
 - `components/DataSection/Table.tsx`: section table, filters, row actions
-- `components/DataSection/exportUtils.ts`: deterministic export + download helpers
+- `utils/exportUtils.ts`: deterministic export + download helpers (including cancel/retry support)
 - `app/api/match/route.ts`: server proxy and normalization for match details
 - `utils/mapper.ts`: source-to-target details mapper
 
